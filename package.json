@@ -1,0 +1,38 @@
+{
+  "name": "@the_awkward_customer/palette-generator-alpha",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "concurrently \"vite build --config vite.config.plugin.ts --watch\" \"vite build --config vite.config.ui.ts --watch\"",
+    "build": "vite build --config vite.config.plugin.ts && vite build --config vite.config.ui.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "culori": "^4.0.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "upng-js": "^2.1.0",
+    "wcag-contrast": "^3.0.0"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.123.0",
+    "@types/culori": "^4.0.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-generate-file": "^0.3.1",
+    "vite-plugin-singlefile": "^2.3.0",
+    "vitest": "^4.0.18"
+  }
+}

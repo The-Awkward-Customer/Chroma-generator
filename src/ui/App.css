@@ -1,0 +1,12 @@
+.app {
+  font-family: Inter, system-ui, sans-serif;
+  padding: 12px;
+  color: var(--figma-color-text, #333);
+  background: var(--figma-color-bg, #fff);
+}
+
+h1 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
