@@ -74,17 +74,17 @@ const mockFigma = {
 // ---------------------------------------------------------------------------
 // Helper: create a small synthetic RGBA image (2x2 pixels, 4 distinct colors)
 // ---------------------------------------------------------------------------
-function makeTinyImage(): { width: number; height: number; pixels: number[] } {
+function makeTinyImage(): { width: number; height: number; pixels: Uint8Array } {
   // 2x2 image: red, green, blue, yellow
   return {
     width: 2,
     height: 2,
-    pixels: [
+    pixels: new Uint8Array([
       255, 0, 0, 255,    // red
       0, 255, 0, 255,    // green
       0, 0, 255, 255,    // blue
       255, 255, 0, 255,  // yellow
-    ],
+    ]),
   };
 }
 

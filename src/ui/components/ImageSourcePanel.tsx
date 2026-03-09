@@ -11,23 +11,38 @@ export function ImageSourcePanel({ postMessage }: Props) {
 
   const handleFile = useCallback(
     (file: File) => {
+      const MAX_DIM = 256;
       const reader = new FileReader();
       reader.onload = () => {
         const img = new Image();
         img.onload = () => {
           const canvas = canvasRef.current;
           if (!canvas) return;
-          canvas.width = img.width;
-          canvas.height = img.height;
+
+          // Downsample in UI canvas to keep message payload small.
+          // This avoids the sandbox VM crash when it tries to deep-wrap
+          // millions of numbers in the message.
+          let w = img.width;
+          let h = img.height;
+          if (w > MAX_DIM || h > MAX_DIM) {
+            const scale = MAX_DIM / Math.max(w, h);
+            w = Math.round(w * scale);
+            h = Math.round(h * scale);
+          }
+
+          canvas.width = w;
+          canvas.height = h;
           const ctx = canvas.getContext("2d")!;
-          ctx.drawImage(img, 0, 0);
-          const imageData = ctx.getImageData(0, 0, img.width, img.height);
+          ctx.drawImage(img, 0, 0, w, h);
+          const imageData = ctx.getImageData(0, 0, w, h);
+
+          // Send as Uint8Array — transferred as a single buffer, not per-element
           postMessage({
             type: "upload-image",
             payload: {
-              width: img.width,
-              height: img.height,
-              pixels: Array.from(imageData.data),
+              width: w,
+              height: h,
+              pixels: new Uint8Array(imageData.data.buffer),
             },
           });
         };

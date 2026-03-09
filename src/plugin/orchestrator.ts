@@ -175,8 +175,8 @@ export class Orchestrator {
   // Image ingestion
   // -----------------------------------------------------------------------
 
-  private handleUploadImage(payload: { width: number; height: number; pixels: number[] }): void {
-    const raw = new Uint8Array(payload.pixels);
+  private handleUploadImage(payload: { width: number; height: number; pixels: Uint8Array }): void {
+    const raw = payload.pixels instanceof Uint8Array ? payload.pixels : new Uint8Array(payload.pixels);
     const downsampled = downsamplePixels(raw, payload.width, payload.height, MAX_DIM);
     this.state.pixels = downsampled.pixels;
     this.state.width = downsampled.width;

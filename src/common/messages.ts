@@ -1,6 +1,6 @@
 // UI → Sandbox messages
 export type UiToSandboxMessage =
-  | { type: "upload-image"; payload: { width: number; height: number; pixels: number[] } }
+  | { type: "upload-image"; payload: { width: number; height: number; pixels: Uint8Array } }
   | { type: "select-layer" }
   | { type: "set-key-count"; payload: { count: number } }
   | { type: "toggle-method"; payload: { method: ExtractionMethod; enabled: boolean } }

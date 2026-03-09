@@ -13,6 +13,14 @@ export default defineConfig(({ mode }) => ({
       data: figmaManifest,
     }),
   ],
+  esbuild: {
+    // Figma's sandbox VM cannot handle template literals with embedded newlines.
+    // culori's CSS parser uses them, causing "Syntax error on line 4: Unexpected
+    // reserved word" because the VM loses parsing context across line breaks.
+    supported: {
+      "template-literal": false,
+    },
+  },
   build: {
     minify: mode === "production",
     sourcemap: mode !== "production" ? "inline" : false,
