@@ -24,6 +24,7 @@ import type { ExtractedColor, ExtractionInput } from "./extraction/types";
 import type { PresetConfig } from "./extraction/presets";
 import { computeHarmony } from "./harmony";
 import { validatePalette } from "./wcag";
+import * as UPNG from "upng-js";
 import {
   SemanticMapper,
   EnumeratedMapper,
@@ -197,8 +198,7 @@ export class Orchestrator {
     // Export the node as a PNG and decode it
     const pngBytes = await node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 1 } });
 
-    // Use upng-js to decode PNG in sandbox
-    const UPNG = await import("upng-js");
+    // Decode PNG in sandbox using upng-js (statically imported)
     const decoded = UPNG.decode(pngBytes.buffer);
     const rgba = new Uint8Array(UPNG.toRGBA8(decoded)[0]);
 

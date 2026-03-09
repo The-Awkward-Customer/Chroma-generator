@@ -19,9 +19,10 @@ export default defineConfig(({ mode }) => ({
     target: "es2017",
     emptyOutDir: false,
     outDir: path.resolve("dist"),
+    modulePreload: false,
     rollupOptions: {
       input: path.resolve("src/plugin/plugin.ts"),
-      output: { entryFileNames: "plugin.js" },
+      output: { entryFileNames: "plugin.js", format: "iife" },
     },
   },
   resolve: {
