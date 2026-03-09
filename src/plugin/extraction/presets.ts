@@ -17,10 +17,10 @@ const allMethodsOff: Record<ExtractionMethod, boolean> = {
 };
 
 const defaultParams: Record<ExtractionMethod, Record<string, number>> = {
-  kmeans: { k: 8, maxIterations: 20 },
-  mediancut: { maxColors: 8 },
+  kmeans: { k: 8 },
+  mediancut: { depth: 3 },
   octree: { maxColors: 8 },
-  hashmap: { gridSize: 16 },
+  hashmap: { bucketSize: 16, topN: 8 },
   deltae: { threshold: 10 },
 };
 

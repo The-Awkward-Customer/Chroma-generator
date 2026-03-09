@@ -1,13 +1,10 @@
 import type { UiToSandboxMessage } from "@common/messages";
+import { Orchestrator } from "./orchestrator";
 
 figma.showUI(__html__, { width: 400, height: 700, themeColors: true });
 
+const orchestrator = new Orchestrator();
+
 figma.ui.onmessage = async (msg: UiToSandboxMessage) => {
-  switch (msg.type) {
-    case "select-layer":
-      // TODO: implement layer selection
-      break;
-    default:
-      console.log("Unknown message type:", msg.type);
-  }
+  await orchestrator.handleMessage(msg);
 };
