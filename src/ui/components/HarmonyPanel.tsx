@@ -1,10 +1,12 @@
-import React, { useCallback } from "react";
+import { useCallback, useState } from "react";
+import { Toggle, Disclosure, Text } from "@create-figma-plugin/ui";
 import type {
   UiToSandboxMessage,
   HarmonyRule,
   DerivedColor,
   WcagPair,
 } from "../../common/messages";
+import { WcagWarningsSection } from "./WcagWarningsSection";
 
 const RULES: { key: HarmonyRule; label: string }[] = [
   { key: "complementary", label: "Complementary" },
@@ -29,12 +31,23 @@ export function HarmonyPanel({
   derivedColors,
   wcagPairs,
 }: Props) {
+  const [openRules, setOpenRules] = useState<Set<string>>(new Set());
+
   const handleToggle = useCallback(
     (rule: HarmonyRule, enabled: boolean) => {
       postMessage({ type: "toggle-harmony", payload: { rule, enabled } });
     },
     [postMessage],
   );
+
+  const toggleOpen = (rule: string) => {
+    setOpenRules((prev) => {
+      const next = new Set(prev);
+      if (next.has(rule)) next.delete(rule);
+      else next.add(rule);
+      return next;
+    });
+  };
 
   // Group derived colors by rule
   const grouped = new Map<HarmonyRule, DerivedColor[]>();
@@ -44,34 +57,32 @@ export function HarmonyPanel({
     grouped.set(dc.rule, list);
   }
 
-  const failingPairs = wcagPairs.filter((p) => !p.scoreAA);
-
   return (
-    <section className="panel">
-      <h2>Harmony & Preview</h2>
-
-      <div className="field">
-        <label>Harmony Rules</label>
-        <div className="rule-toggles">
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div>
+        <Text style={{ fontWeight: "bold" }}>Harmony Rules</Text>
+        <div className="rule-toggles" style={{ marginTop: "4px" }}>
           {RULES.map((r) => (
-            <label key={r.key} className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={activeRules.has(r.key)}
-                onChange={(e) => handleToggle(r.key, e.target.checked)}
-              />
-              {r.label}
-            </label>
+            <Toggle
+              key={r.key}
+              value={activeRules.has(r.key)}
+              onValueChange={(val: boolean) => handleToggle(r.key, val)}
+            >
+              <Text>{r.label}</Text>
+            </Toggle>
           ))}
         </div>
       </div>
 
       {derivedColors.length > 0 && (
         <div className="derived-section">
-          <h3>Derived Colors</h3>
           {Array.from(grouped.entries()).map(([rule, colors]) => (
-            <div key={rule} className="derived-group">
-              <span className="derived-rule-label">{rule}</span>
+            <Disclosure
+              key={rule}
+              open={openRules.has(rule)}
+              onClick={() => toggleOpen(rule)}
+              title={`${rule} (${colors.length})`}
+            >
               <div className="derived-row">
                 {colors.map((dc, i) => (
                   <div
@@ -82,29 +93,12 @@ export function HarmonyPanel({
                   />
                 ))}
               </div>
-            </div>
+            </Disclosure>
           ))}
         </div>
       )}
 
-      {failingPairs.length > 0 && (
-        <div className="wcag-warnings">
-          <h3>WCAG Warnings ({failingPairs.length})</h3>
-          {failingPairs.slice(0, 5).map((p, i) => (
-            <div key={i} className="wcag-pair">
-              <div className="wcag-swatch-pair">
-                <div className="mini-swatch" style={{ backgroundColor: p.bgHex }} />
-              </div>
-              <span className="wcag-ratio">{p.ratio.toFixed(1)}:1</span>
-              {p.suggestedFix && (
-                <span className="wcag-fix" title="Suggested fix">
-                  {p.suggestedFix}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
+      <WcagWarningsSection wcagPairs={wcagPairs} />
+    </div>
   );
 }

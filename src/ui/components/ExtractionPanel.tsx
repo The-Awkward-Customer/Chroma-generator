@@ -1,8 +1,8 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
+import { SegmentedControl, Toggle, RangeSlider, Text } from "@create-figma-plugin/ui";
 import type {
   UiToSandboxMessage,
   ExtractionMethod,
-  PresetName,
 } from "../../common/messages";
 
 const METHODS: { key: ExtractionMethod; label: string }[] = [
@@ -13,11 +13,11 @@ const METHODS: { key: ExtractionMethod; label: string }[] = [
   { key: "deltae", label: "Delta-E" },
 ];
 
-const PRESETS: { key: PresetName; label: string }[] = [
-  { key: "photographic", label: "Photographic" },
-  { key: "graphic", label: "Graphic" },
-  { key: "high-fidelity", label: "High Fidelity" },
-  { key: "custom", label: "Custom" },
+const PRESET_OPTIONS = [
+  { value: "photographic", children: "Photo" },
+  { value: "graphic", children: "Graphic" },
+  { value: "high-fidelity", children: "Hi-Fi" },
+  { value: "custom", children: "Custom" },
 ];
 
 interface Props {
@@ -34,8 +34,8 @@ export function ExtractionPanel({
   keyCount,
 }: Props) {
   const handlePreset = useCallback(
-    (preset: PresetName) => {
-      postMessage({ type: "select-preset", payload: { preset } });
+    (value: string) => {
+      postMessage({ type: "select-preset", payload: { preset: value as any } });
     },
     [postMessage],
   );
@@ -48,55 +48,47 @@ export function ExtractionPanel({
   );
 
   const handleKeyCount = useCallback(
-    (count: number) => {
-      postMessage({ type: "set-key-count", payload: { count } });
+    (value: number) => {
+      postMessage({ type: "set-key-count", payload: { count: value } });
     },
     [postMessage],
   );
 
   return (
-    <section className="panel">
-      <h2>Extraction Settings</h2>
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div>
+        <Text style={{ fontWeight: "bold" }}>Preset</Text>
+        <SegmentedControl
+          options={PRESET_OPTIONS}
+          value={activePreset}
+          onValueChange={handlePreset}
+        />
+      </div>
 
-      <div className="field">
-        <label>Preset</label>
-        <div className="preset-row">
-          {PRESETS.map((p) => (
-            <button
-              key={p.key}
-              className={`btn btn-sm ${activePreset === p.key ? "btn-active" : ""}`}
-              onClick={() => handlePreset(p.key)}
+      <div>
+        <Text style={{ fontWeight: "bold" }}>Methods</Text>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "4px" }}>
+          {METHODS.map((m) => (
+            <Toggle
+              key={m.key}
+              value={activeMethods[m.key] ?? false}
+              onValueChange={(val: boolean) => handleToggleMethod(m.key, val)}
             >
-              {p.label}
-            </button>
+              <Text>{m.label}</Text>
+            </Toggle>
           ))}
         </div>
       </div>
 
-      <div className="field">
-        <label>Methods</label>
-        {METHODS.map((m) => (
-          <label key={m.key} className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={activeMethods[m.key] ?? false}
-              onChange={(e) => handleToggleMethod(m.key, e.target.checked)}
-            />
-            {m.label}
-          </label>
-        ))}
-      </div>
-
-      <div className="field">
-        <label>Key Colors: {keyCount}</label>
-        <input
-          type="range"
-          min={1}
-          max={12}
-          value={keyCount}
-          onChange={(e) => handleKeyCount(Number(e.target.value))}
+      <div>
+        <Text style={{ fontWeight: "bold" }}>Key Colors: {keyCount}</Text>
+        <RangeSlider
+          minimum={1}
+          maximum={12}
+          value={String(keyCount)}
+          onNumericValueInput={handleKeyCount}
         />
       </div>
-    </section>
+    </div>
   );
 }

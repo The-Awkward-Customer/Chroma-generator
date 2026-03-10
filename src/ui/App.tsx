@@ -1,14 +1,28 @@
-import React, { useState } from "react";
+import { useState, useCallback } from "react";
+import { Tabs, Banner } from "@create-figma-plugin/ui";
+import { IconWarning16 } from "@create-figma-plugin/ui";
 import { usePluginMessages } from "./hooks/usePluginMessages";
-import { ImageSourcePanel } from "./components/ImageSourcePanel";
-import { ExtractionPanel } from "./components/ExtractionPanel";
-import { KeyColorsPanel } from "./components/KeyColorsPanel";
-import { HarmonyPanel } from "./components/HarmonyPanel";
-import { OutputPanel } from "./components/OutputPanel";
+import { ExtractTab } from "./components/ExtractTab";
+import { RefineTab } from "./components/RefineTab";
+import { ExportTab } from "./components/ExportTab";
 import type { ExtractionMethod, HarmonyRule, PresetName } from "../common/messages";
 
+type TabValue = "extract" | "refine" | "export";
+
 export default function App() {
-  const { state, postMessage } = usePluginMessages();
+  const [activeTab, setActiveTab] = useState<TabValue>("extract");
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const { state, postMessage } = usePluginMessages({
+    onExtractionResult: () => {
+      setIsExtracting(false);
+      setActiveTab("refine");
+    },
+    onExportComplete: () => {
+      setIsExporting(false);
+    },
+  });
 
   // Local UI state for extraction panel controls
   const [activePreset, setActivePreset] = useState<PresetName>("photographic");
@@ -22,9 +36,13 @@ export default function App() {
   const [keyCount, setKeyCount] = useState(5);
   const [activeRules, setActiveRules] = useState<Set<HarmonyRule>>(new Set(["complementary"]));
 
-  // Wrap postMessage to keep local UI state in sync
-  const wrappedPostMessage = (msg: Parameters<typeof postMessage>[0]) => {
+  // Wrap postMessage to keep local UI state in sync + manage loading
+  const wrappedPostMessage = useCallback((msg: Parameters<typeof postMessage>[0]) => {
     switch (msg.type) {
+      case "upload-image":
+      case "select-layer":
+        setIsExtracting(true);
+        break;
       case "select-preset": {
         setActivePreset(msg.payload.preset);
         const presetMethods: Record<PresetName, Record<ExtractionMethod, boolean>> = {
@@ -51,46 +69,69 @@ export default function App() {
           return next;
         });
         break;
+      case "export-figma":
+        setIsExporting(true);
+        break;
     }
     postMessage(msg);
-  };
+  }, [postMessage, activeMethods]);
+
+  const colorCount = state.keyColors.length;
+  const tabOptions = [
+    { value: "extract", children: "Extract" },
+    { value: "refine", children: colorCount > 0 ? `Refine (${colorCount})` : "Refine" },
+    { value: "export", children: "Export" },
+  ];
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>ChromaExtract</h1>
-      </header>
+      <Tabs
+        options={tabOptions}
+        value={activeTab}
+        onValueChange={(val: string) => setActiveTab(val as TabValue)}
+      />
 
       {state.error && (
-        <div className="error-banner">{state.error}</div>
+        <div style={{ padding: "0 12px" }}>
+          <Banner icon={<IconWarning16 />} variant="warning">
+            {state.error}
+          </Banner>
+        </div>
       )}
 
-      <ImageSourcePanel postMessage={wrappedPostMessage} />
+      <div className="tab-content">
+        {activeTab === "extract" && (
+          <ExtractTab
+            postMessage={wrappedPostMessage}
+            activePreset={activePreset}
+            activeMethods={activeMethods}
+            keyCount={keyCount}
+            keyColors={state.keyColors}
+            isExtracting={isExtracting}
+          />
+        )}
 
-      <ExtractionPanel
-        postMessage={wrappedPostMessage}
-        activePreset={activePreset}
-        activeMethods={activeMethods}
-        keyCount={keyCount}
-      />
+        {activeTab === "refine" && (
+          <RefineTab
+            postMessage={wrappedPostMessage}
+            keyColors={state.keyColors}
+            activeRules={activeRules}
+            derivedColors={state.derivedColors}
+            wcagPairs={state.wcagPairs}
+            onGoToExtract={() => setActiveTab("extract")}
+          />
+        )}
 
-      <KeyColorsPanel
-        postMessage={wrappedPostMessage}
-        keyColors={state.keyColors}
-      />
-
-      <HarmonyPanel
-        postMessage={wrappedPostMessage}
-        activeRules={activeRules}
-        derivedColors={state.derivedColors}
-        wcagPairs={state.wcagPairs}
-      />
-
-      <OutputPanel
-        postMessage={wrappedPostMessage}
-        exportResult={state.exportResult}
-        hasKeyColors={state.keyColors.length > 0}
-      />
+        {activeTab === "export" && (
+          <ExportTab
+            postMessage={wrappedPostMessage}
+            exportResult={state.exportResult}
+            hasKeyColors={state.keyColors.length > 0}
+            isExporting={isExporting}
+            onGoToExtract={() => setActiveTab("extract")}
+          />
+        )}
+      </div>
     </div>
   );
 }
