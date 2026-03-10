@@ -17,11 +17,11 @@ function hexToRgb01(hex: string): [number, number, number] {
  * If a style with that name already exists it is updated in place;
  * otherwise a new style is created.
  */
-export function renderFigmaStyles(
+export async function renderFigmaStyles(
   tokens: PaletteToken[],
   prefix: string = "ChromaExtract",
-): void {
-  const existing = figma.getLocalPaintStyles();
+): Promise<void> {
+  const existing = await figma.getLocalPaintStylesAsync();
   const styleMap = new Map<string, PaintStyle>();
 
   for (const style of existing) {
