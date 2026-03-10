@@ -1,11 +1,14 @@
 import { defineConfig } from "vite";
 import path from "node:path";
 import { viteSingleFile } from "vite-plugin-singlefile";
-import react from "@vitejs/plugin-react";
 
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), viteSingleFile()],
+  plugins: [viteSingleFile()],
   root: path.resolve("src/ui"),
+  esbuild: {
+    jsxImportSource: "preact",
+    jsx: "automatic",
+  },
   build: {
     minify: mode === "production",
     cssMinify: mode === "production",
@@ -17,6 +20,9 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@common": path.resolve("src/common"),
       "@ui": path.resolve("src/ui"),
+      "react": "preact/compat",
+      "react-dom": "preact/compat",
+      "react/jsx-runtime": "preact/jsx-runtime",
     },
   },
 }));
