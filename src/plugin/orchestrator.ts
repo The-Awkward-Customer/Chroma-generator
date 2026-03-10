@@ -97,6 +97,9 @@ export interface PluginState {
 
   /** WCAG contrast pairs */
   wcagPairs: WcagPair[];
+
+  /** Source name (layer name or uploaded filename) for collection naming */
+  sourceName: string;
 }
 
 function createInitialState(): PluginState {
@@ -112,6 +115,7 @@ function createInitialState(): PluginState {
     keyColors: [],
     derivedColors: [],
     wcagPairs: [],
+    sourceName: "palette",
   };
 }
 
@@ -175,8 +179,9 @@ export class Orchestrator {
   // Image ingestion
   // -----------------------------------------------------------------------
 
-  private handleUploadImage(payload: { width: number; height: number; pixels: Uint8Array }): void {
+  private handleUploadImage(payload: { width: number; height: number; pixels: Uint8Array; sourceName?: string }): void {
     const raw = payload.pixels instanceof Uint8Array ? payload.pixels : new Uint8Array(payload.pixels);
+    this.state.sourceName = payload.sourceName ?? "palette";
     const downsampled = downsamplePixels(raw, payload.width, payload.height, MAX_DIM);
     this.state.pixels = downsampled.pixels;
     this.state.width = downsampled.width;
@@ -194,6 +199,7 @@ export class Orchestrator {
     }
 
     const node = selection[0];
+    this.state.sourceName = node.name || "layer";
 
     // Export the node as a PNG and decode it
     const pngBytes = await node.exportAsync({ format: "PNG", constraint: { type: "SCALE", value: 1 } });
@@ -406,7 +412,7 @@ export class Orchestrator {
       await renderFigmaStyles(mapped.tokens);
     }
     if (config.outputs.variables) {
-      await renderFigmaVariables(mapped.tokens);
+      await renderFigmaVariables(mapped.tokens, this.state.sourceName);
     }
     if (config.outputs.canvasFrame) {
       await renderCanvasFrame(mapped);

@@ -23,12 +23,11 @@ const mockFigma = {
   createPaintStyle: vi.fn(() => ({ name: "", paints: [], description: "" })),
   variables: {
     getLocalVariableCollectionsAsync: vi.fn(async () => []),
-    getLocalVariablesAsync: vi.fn(async () => []),
-    createVariableCollection: vi.fn(() => ({
+    createVariableCollection: vi.fn((name: string) => ({
       id: "vc1",
       modes: [{ modeId: "m1" }],
       renameMode: vi.fn(),
-      name: "ChromaExtract Colors",
+      name,
     })),
     createVariable: vi.fn(() => ({
       setValueForMode: vi.fn(),

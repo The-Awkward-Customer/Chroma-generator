@@ -39,6 +39,7 @@ export function ImageSourcePanel({ postMessage }: Props) {
               width: w,
               height: h,
               pixels: new Uint8Array(imageData.data.buffer),
+              sourceName: file.name,
             },
           });
         };
