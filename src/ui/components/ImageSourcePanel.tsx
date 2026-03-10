@@ -1,4 +1,5 @@
-import React, { useCallback, useRef } from "react";
+import { useCallback, useRef } from "react";
+import { Button, FileUploadDropzone, Text } from "@create-figma-plugin/ui";
 import type { UiToSandboxMessage } from "../../common/messages";
 
 interface Props {
@@ -7,7 +8,6 @@ interface Props {
 
 export function ImageSourcePanel({ postMessage }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(
     (file: File) => {
@@ -19,9 +19,6 @@ export function ImageSourcePanel({ postMessage }: Props) {
           const canvas = canvasRef.current;
           if (!canvas) return;
 
-          // Downsample in UI canvas to keep message payload small.
-          // This avoids the sandbox VM crash when it tries to deep-wrap
-          // millions of numbers in the message.
           let w = img.width;
           let h = img.height;
           if (w > MAX_DIM || h > MAX_DIM) {
@@ -36,7 +33,6 @@ export function ImageSourcePanel({ postMessage }: Props) {
           ctx.drawImage(img, 0, 0, w, h);
           const imageData = ctx.getImageData(0, 0, w, h);
 
-          // Send as Uint8Array — transferred as a single buffer, not per-element
           postMessage({
             type: "upload-image",
             payload: {
@@ -53,10 +49,9 @@ export function ImageSourcePanel({ postMessage }: Props) {
     [postMessage],
   );
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const file = e.dataTransfer.files[0];
+  const handleSelectedFiles = useCallback(
+    (files: File[]) => {
+      const file = files[0];
       if (file && file.type.startsWith("image/")) {
         handleFile(file);
       }
@@ -69,30 +64,17 @@ export function ImageSourcePanel({ postMessage }: Props) {
   }, [postMessage]);
 
   return (
-    <section className="panel">
-      <h2>Image Source</h2>
-      <div
-        className="drop-zone"
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        onClick={() => fileRef.current?.click()}
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <FileUploadDropzone
+        acceptedFileTypes={["image/png", "image/jpeg", "image/gif", "image/webp"]}
+        onSelectedFiles={handleSelectedFiles}
       >
-        <span>Drop image or click to upload</span>
-      </div>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleFile(file);
-        }}
-      />
-      <button className="btn btn-secondary" onClick={handleSelectLayer}>
+        <Text align="center">Drop image or click to upload</Text>
+      </FileUploadDropzone>
+      <Button secondary fullWidth onClick={handleSelectLayer}>
         Extract from Selection
-      </button>
+      </Button>
       <canvas ref={canvasRef} style={{ display: "none" }} />
-    </section>
+    </div>
   );
 }

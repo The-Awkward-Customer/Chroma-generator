@@ -403,10 +403,10 @@ export class Orchestrator {
     const mapped = mapper.map(paletteData, config.schema, config.customPrefix);
 
     if (config.outputs.styles) {
-      renderFigmaStyles(mapped.tokens);
+      await renderFigmaStyles(mapped.tokens);
     }
     if (config.outputs.variables) {
-      renderFigmaVariables(mapped.tokens);
+      await renderFigmaVariables(mapped.tokens);
     }
     if (config.outputs.canvasFrame) {
       await renderCanvasFrame(mapped);

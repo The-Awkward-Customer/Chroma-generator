@@ -23,10 +23,15 @@ const initialState: PluginState = {
   error: null,
 };
 
-export function usePluginMessages() {
+export interface UsePluginMessagesOptions {
+  onExtractionResult?: (keyColors: KeyColor[]) => void;
+  onExportComplete?: (result: { success: boolean; message: string }) => void;
+}
+
+export function usePluginMessages(options?: UsePluginMessagesOptions) {
   const [state, setState] = useState<PluginState>(initialState);
-  const stateRef = useRef(state);
-  stateRef.current = state;
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -36,6 +41,7 @@ export function usePluginMessages() {
       switch (msg.type) {
         case "extraction-result":
           setState((prev) => ({ ...prev, keyColors: msg.payload.keyColors, error: null }));
+          optionsRef.current?.onExtractionResult?.(msg.payload.keyColors);
           break;
         case "harmony-result":
           setState((prev) => ({ ...prev, derivedColors: msg.payload.derivedColors }));
@@ -45,6 +51,7 @@ export function usePluginMessages() {
           break;
         case "export-complete":
           setState((prev) => ({ ...prev, exportResult: msg.payload }));
+          optionsRef.current?.onExportComplete?.(msg.payload);
           break;
         case "error":
           setState((prev) => ({ ...prev, error: msg.payload.message }));

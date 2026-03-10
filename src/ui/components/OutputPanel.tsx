@@ -1,4 +1,6 @@
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
+import { Button, Checkbox, Dropdown, Textbox, Banner, Text } from "@create-figma-plugin/ui";
+import { IconCheck16, IconWarning16 } from "@create-figma-plugin/ui";
 import type {
   UiToSandboxMessage,
   OutputMode,
@@ -6,25 +8,26 @@ import type {
   ExportConfig,
 } from "../../common/messages";
 
-const OUTPUT_MODES: { key: OutputMode; label: string }[] = [
-  { key: "semantic", label: "Semantic Tokens" },
-  { key: "enumerated", label: "Enumerated Palette" },
-  { key: "math-report", label: "Color Math Report" },
+const OUTPUT_MODE_OPTIONS: Array<{ value: string; text: string }> = [
+  { value: "semantic", text: "Semantic Tokens" },
+  { value: "enumerated", text: "Enumerated Palette" },
+  { value: "math-report", text: "Color Math Report" },
 ];
 
-const SCHEMAS: { key: TokenSchema; label: string }[] = [
-  { key: "material", label: "Material Design" },
-  { key: "tailwind", label: "Tailwind" },
-  { key: "custom", label: "Custom" },
+const SCHEMA_OPTIONS: Array<{ value: string; text: string }> = [
+  { value: "material", text: "Material Design" },
+  { value: "tailwind", text: "Tailwind" },
+  { value: "custom", text: "Custom" },
 ];
 
 interface Props {
   postMessage: (msg: UiToSandboxMessage) => void;
   exportResult: { success: boolean; message: string } | null;
   hasKeyColors: boolean;
+  isExporting?: boolean;
 }
 
-export function OutputPanel({ postMessage, exportResult, hasKeyColors }: Props) {
+export function OutputPanel({ postMessage, exportResult, hasKeyColors, isExporting }: Props) {
   const [mode, setMode] = useState<OutputMode>("semantic");
   const [schema, setSchema] = useState<TokenSchema>("material");
   const [customPrefix, setCustomPrefix] = useState("color");
@@ -54,89 +57,74 @@ export function OutputPanel({ postMessage, exportResult, hasKeyColors }: Props) 
   };
 
   return (
-    <section className="panel">
-      <h2>Output</h2>
-
-      <div className="field">
-        <label>Output Mode</label>
-        <select value={mode} onChange={(e) => setMode(e.target.value as OutputMode)}>
-          {OUTPUT_MODES.map((m) => (
-            <option key={m.key} value={m.key}>
-              {m.label}
-            </option>
-          ))}
-        </select>
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div>
+        <Text style={{ fontWeight: "bold" }}>Output Mode</Text>
+        <Dropdown
+          options={OUTPUT_MODE_OPTIONS}
+          value={mode}
+          onValueChange={(val: string) => setMode(val as OutputMode)}
+        />
       </div>
 
-      <div className="field">
-        <label>Token Schema</label>
-        <select value={schema} onChange={(e) => setSchema(e.target.value as TokenSchema)}>
-          {SCHEMAS.map((s) => (
-            <option key={s.key} value={s.key}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+      <div>
+        <Text style={{ fontWeight: "bold" }}>Token Schema</Text>
+        <Dropdown
+          options={SCHEMA_OPTIONS}
+          value={schema}
+          onValueChange={(val: string) => setSchema(val as TokenSchema)}
+        />
       </div>
 
       {schema === "custom" && (
-        <div className="field">
-          <label>Custom Prefix</label>
-          <input
-            type="text"
+        <div>
+          <Text style={{ fontWeight: "bold" }}>Custom Prefix</Text>
+          <Textbox
             value={customPrefix}
-            onChange={(e) => setCustomPrefix(e.target.value)}
+            onValueInput={(val: string) => setCustomPrefix(val)}
             placeholder="color"
           />
         </div>
       )}
 
-      <div className="field">
-        <label>Figma Outputs</label>
-        <label className="checkbox-label">
-          <input type="checkbox" checked={outputs.styles} onChange={() => toggleOutput("styles")} />
-          Paint Styles
-        </label>
-        <label className="checkbox-label">
-          <input type="checkbox" checked={outputs.variables} onChange={() => toggleOutput("variables")} />
-          Variables
-        </label>
-        <label className="checkbox-label">
-          <input type="checkbox" checked={outputs.canvasFrame} onChange={() => toggleOutput("canvasFrame")} />
-          Canvas Frame
-        </label>
-        <label className="checkbox-label">
-          <input type="checkbox" checked={outputs.json} onChange={() => toggleOutput("json")} />
-          JSON (W3C Design Tokens)
-        </label>
+      <div>
+        <Text style={{ fontWeight: "bold" }}>Figma Outputs</Text>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "4px" }}>
+          <Checkbox value={outputs.styles} onValueChange={() => toggleOutput("styles")}>
+            <Text>Paint Styles</Text>
+          </Checkbox>
+          <Checkbox value={outputs.variables} onValueChange={() => toggleOutput("variables")}>
+            <Text>Variables</Text>
+          </Checkbox>
+          <Checkbox value={outputs.canvasFrame} onValueChange={() => toggleOutput("canvasFrame")}>
+            <Text>Canvas Frame</Text>
+          </Checkbox>
+          <Checkbox value={outputs.json} onValueChange={() => toggleOutput("json")}>
+            <Text>JSON (W3C Design Tokens)</Text>
+          </Checkbox>
+        </div>
       </div>
 
       <div className="export-actions">
-        <button
-          className="btn btn-primary"
-          onClick={handleExport}
-          disabled={!hasKeyColors}
-        >
+        <Button onClick={handleExport} disabled={!hasKeyColors} loading={isExporting}>
           Export to Figma
-        </button>
-        <button
-          className="btn btn-secondary"
-          onClick={handleExportJson}
-          disabled={!hasKeyColors}
-        >
+        </Button>
+        <Button secondary onClick={handleExportJson} disabled={!hasKeyColors}>
           Export JSON
-        </button>
+        </Button>
       </div>
 
       {exportResult && (
-        <div className={`export-result ${exportResult.success ? "success" : "error"}`}>
-          {exportResult.success
-            ? outputs.json
-              ? "JSON exported"
-              : "Export complete"
-            : exportResult.message}
-        </div>
+        exportResult.success ? (
+          <Banner icon={<IconCheck16 />} variant="success">
+            {outputs.json ? "JSON exported" : "Export complete"}
+          </Banner>
+        ) : (
+          <Banner icon={<IconWarning16 />} variant="warning">
+            {exportResult.message}
+          </Banner>
+        )
       )}
-    </section>
+    </div>
   );
 }

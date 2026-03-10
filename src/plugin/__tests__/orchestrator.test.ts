@@ -19,16 +19,21 @@ const mockFigma = {
   viewport: {
     scrollAndZoomIntoView: vi.fn(),
   },
-  getLocalPaintStyles: vi.fn(() => []),
+  getLocalPaintStylesAsync: vi.fn(async () => []),
   createPaintStyle: vi.fn(() => ({ name: "", paints: [], description: "" })),
   variables: {
+    getLocalVariableCollectionsAsync: vi.fn(async () => []),
+    getLocalVariablesAsync: vi.fn(async () => []),
     createVariableCollection: vi.fn(() => ({
+      id: "vc1",
       modes: [{ modeId: "m1" }],
       renameMode: vi.fn(),
+      name: "ChromaExtract Colors",
     })),
     createVariable: vi.fn(() => ({
       setValueForMode: vi.fn(),
       description: "",
+      variableCollectionId: "vc1",
     })),
   },
   createFrame: vi.fn(() => ({
@@ -304,6 +309,6 @@ describe("Orchestrator", () => {
 
     const exportMsg = postedMessages.find((m) => m.type === "export-complete");
     expect(exportMsg).toBeDefined();
-    expect(mockFigma.getLocalPaintStyles).toHaveBeenCalled();
+    expect(mockFigma.getLocalPaintStylesAsync).toHaveBeenCalled();
   });
 });

@@ -11,30 +11,54 @@ function hexToRgb01(hex: string): [number, number, number] {
 }
 
 /**
- * Create a Figma variable collection populated with COLOR variables
- * from the given palette tokens.
+ * Create or update a Figma variable collection populated with COLOR
+ * variables from the given palette tokens.
  *
- * A single collection is created with one variable per token.
- * The default mode is renamed to "Light" and each variable's value
- * is set for that mode.
+ * If a collection with the given name already exists it is reused and
+ * its variables are updated in place; otherwise a new collection is
+ * created. This prevents "Duplicate variable name" errors when
+ * exporting multiple times.
  */
-export function renderFigmaVariables(
+export async function renderFigmaVariables(
   tokens: PaletteToken[],
   collectionName: string = "ChromaExtract Colors",
-): void {
-  const collection =
-    figma.variables.createVariableCollection(collectionName);
+): Promise<void> {
+  const existingCollections =
+    await figma.variables.getLocalVariableCollectionsAsync();
 
-  // The collection is created with one default mode; rename it to "Light".
+  let collection = existingCollections.find((c) => c.name === collectionName);
+  let isNew = false;
+
+  if (!collection) {
+    collection = figma.variables.createVariableCollection(collectionName);
+    isNew = true;
+  }
+
   const defaultModeId = collection.modes[0].modeId;
-  collection.renameMode(defaultModeId, "Light");
+
+  if (isNew) {
+    collection.renameMode(defaultModeId, "Light");
+  }
+
+  // Build a map of existing variables in this collection by name
+  const existingVars = await figma.variables.getLocalVariablesAsync("COLOR");
+  const varMap = new Map<string, Variable>();
+  for (const v of existingVars) {
+    if (v.variableCollectionId === collection.id) {
+      varMap.set(v.name, v);
+    }
+  }
 
   for (const token of tokens) {
-    const variable = figma.variables.createVariable(
-      token.name,
-      collection,
-      "COLOR",
-    );
+    let variable = varMap.get(token.name);
+
+    if (!variable) {
+      variable = figma.variables.createVariable(
+        token.name,
+        collection,
+        "COLOR",
+      );
+    }
 
     const [r, g, b] = hexToRgb01(token.hex);
     variable.setValueForMode(defaultModeId, { r, g, b });

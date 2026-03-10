@@ -1,4 +1,4 @@
-import React from "react";
+import "@create-figma-plugin/ui/css/base.css";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./App.css";
